@@ -209,22 +209,32 @@ def FindVariables(formula, variables = None):
 if __name__ == "__main__":
 	
 	problems = [#'p',
-	#'(NOT (NOT (NOT (NOT not))  )		)',
+	#'(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
 	#'(IF p p)',
 	#'(AND p (NOT p) q (NOT t) gf)',
 	#'(OR five (OR three four))',
-	'(IF (IF (NOT p) (NOT q)) (IF p q))', 	### Example from slide 59
-	'(IF (AND q123 (NOT p) t) p)', 			#Test DM
-	#'(IF (NOT (OR p q123)) (AND q123 (NOT p)))',
+	#'(IF (AND q123 (NOT p) t) p)', 			#Test DM
 	#'anAtom123',
-	'(NOT (NOT (NOT (IF p q))))',			#Test DM 
-	'(NOT (AND p q))',            			#Test DM
+	#'(NOT (NOT (NOT (IF p q))))',			#Test DM 
+	#'(NOT (AND p q))',            			#Test DM
 	#'(NOT (NOT (AND p q)))'       			#Test DM
+	'(IF (IF (NOT p) (NOT q)) (IF p q))', 		### cnf1 Example from slide 59
+	'(OR p (NOT p) q (NOT q))',					### cnf2 3rd from P1_grader
+	'(AND p (NOT p) (NOT (NOT querty123)))',	### cnf3 4th from P1_grader
+	'(IF (NOT (OR p q123)) (AND q123 (NOT p)))'	### cnf4 Complex example
 	]
 	
+	cnf1 = [[['p'], ['p'], 'q'], ['q', ['p'], 'q']]	# (-p v -p v q) ^ (q v -p v q)
+	cnf2 = [['p', ['p'], 'q', ['q']]]				# (p v -p v q v -q)
+	cnf3 = [['p'], [['p']], ['querty123']]			# (p) ^ (-p) ^ (querty123)
+	cnf4 = [['p', 'q', 'q'], ['p', 'q', ['p']]]		# (p v q v q) ^ (p v q v -p)
+
+	## If you prefer a list of the cnfs use this
 	'''
-	problems = ['(IF a b)',
-	'(AND (NOT a) b c d)']
+	cnfProblems = [[[['p'], ['p'], 'q'], ['q', ['p'], 'q']], 
+	[['p', ['p'], 'q', ['q']]], 
+	[['p'], [['p']], ['querty123']], 
+	[['p', 'q', 'q'], ['p', 'q', ['p']]]]
 	'''
 
 	for i in range(len(problems)):
