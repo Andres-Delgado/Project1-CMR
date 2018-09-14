@@ -21,18 +21,21 @@ def proveFormula(F):
 	# Step 1
 	cnfList = EliminateOps(formulaList)
 	if cnfList:
-		print("1.	Elim Ops:     ", cnfList)
+		print("1.    Elim Ops:     ", cnfList)
 	else: return
 	
 	# Steps 2/3 combined 
 	cnfList = DeMorgans(cnfList)
 	if cnfList:
-		print("2/3.	DM/Negations: ", cnfList)
+		print("2/3.  DM/Negations: ", cnfList)
 	else: return
 
-	#print(formulaList)
+	cnfList = Distribute(cnfList)
+	if cnfList:
+		print("4.    Distribute:   ", cnfList)
+	else: return
+	
 	return "Good"
-
 
 def EliminateOps(formula):
 	"""Step 1 of Theorem 4.3: Recursively eliminates IFs."""
@@ -101,7 +104,7 @@ def DeMorgans(formula, negation = False):
 			# Applies De Morgan's laws to the nested argument
 			return DeMorgans(formula[1], True)
 
-		# Case where there is a double negation on a signle variable	
+		# Case where there is a double negation on a single variable	
 		elif negation:
 			return formula[1]
 		return formula
@@ -124,6 +127,94 @@ def DeMorgans(formula, negation = False):
 		# Negates the single variable
 		elif negation:
 			formula[arg] = ['NOT', formula[arg]]
+	return formula
+
+def Distribute(formula, inside = False):
+	"""Step 4 of Theorem 4.3: Uses distributive laws to elimiate conjunctions within disjunctions.
+	inside is used to check if the original, or modified original formula, is just 1 OR argument.
+	Returns a CNF formula in S-Expression"""
+
+	operations = ["AND", "OR"]
+
+	# Checks if index 0 is AND/OR
+	# else, Formula is a single variable
+	if formula[0] in operations: 
+		opIndex = operations.index(formula[0])
+	else: return[formula]
+		
+	# Post-Order traversal to the innermost nested argument
+	for arg in range(1, len(formula)):
+		#print(arg, formula)
+		#print(arg, formula[arg])
+		if (type(formula[arg]) is list) and (formula[arg][0] != "NOT"):
+			#print("\nSearching in: ", formula[arg])
+			formula[arg] = Distribute(formula[arg], True)			
+	#print()
+
+	# Iterates through formula and checks if nested arguments are AND/OR lists
+	# Applies appropriate distribution if needed
+	for arg in range(1, len(formula)):
+
+		# Re-assign opIndex if original formula has been changed
+		if formula[0] != operations[opIndex]:
+			#print(opIndex, end = '/')
+			opIndex = operations.index(formula[0])
+			#print(opIndex)
+
+		# Current formula is AND/OR 
+		if (type(formula[arg]) is list) and (formula[arg][0] != "NOT"):
+			#print("Check to distribute:", formula)
+			#print("With:               ", formula[arg])
+
+			# Current formula is OR and arguemnt is AND: applies distributive law
+			# Case: formula is (A v (B ^ C)) or ((A ^ B) v C)
+			if (opIndex == 1) and (formula[arg][0] == "AND"):
+				#print("CASE (A V (B ^ C))", end = '\n\n')
+				aFormula = formula.pop(arg)
+				#print("B/C: ", formula)
+				#print("A:   ", aFormula, end = '\n\n')	
+				#print("Distributing...")
+
+				###############################
+				# POSSIBLE COMPREHENSION LIST #
+				###############################
+				newFormula = ['AND',]
+				for x in aFormula[1:]:
+					#print(i, "\n    List: ", newFormula)
+					#print("    A:    ", x)
+					stack = ['OR', x]
+					for y in formula[1:]:
+						#print("    B/C:  ", y)
+						stack.append(y)
+						#print("    Stack: ", stack)
+					newFormula.append(stack)
+					#print(newFormula, end = '\n\n')
+				#print("\nCalling again")
+
+				# recursive call is needed because the indices could have been changed
+				return Distribute(newFormula)
+				
+			# Current formula is the same operation as inside argument
+			# Case is some variation of: ((A v B) v C) or (A ^ (B ^ C))  
+			elif opIndex == (operations.index(formula[arg][0])):
+				#print("Formula:   ", formula)
+				newFormula = formula.pop(arg)
+				#print("F(Popped): ", formula)
+				#print("Popped:    ", newFormula)	
+				formula = formula + [x for x in newFormula[1:]]
+				#print("Distributed OR/OR:")
+				#print(formula)
+				#print("\nCalling again")
+
+				# recursive call is needed because the indices could have been changed
+				return Distribute(formula, inside)
+				
+	# Case where formula is just one argument of disjunctions or a single variable: 
+	# (p v q v r)  -->  ((p v q v r)) so program can read it as CNF
+	if ((not inside) and (formula[0] == "OR")):
+		return [formula]
+
+	#print("End Search")
 	return formula
 
 def MakeList(F):
@@ -208,7 +299,7 @@ def FindVariables(formula, variables = None):
 
 if __name__ == "__main__":
 	
-	problems = [#'p',
+	problems = [#'p', '(NOT p)',
 	#'(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
 	#'(IF p p)',
 	#'(AND p (NOT p) q (NOT t) gf)',
@@ -218,23 +309,29 @@ if __name__ == "__main__":
 	#'(NOT (NOT (NOT (IF p q))))',			#Test DM 
 	#'(NOT (AND p q))',            			#Test DM
 	#'(NOT (NOT (AND p q)))'       			#Test DM
-	'(IF (IF (NOT p) (NOT q)) (IF p q))', 		### cnf1 Example from slide 59
-	'(OR p (NOT p) q (NOT q))',					### cnf2 3rd from P1_grader
-	'(AND p (NOT p) (NOT (NOT querty123)))',	### cnf3 4th from P1_grader
-	'(IF (NOT (OR p q123)) (AND q123 (NOT p)))'	### cnf4 Complex example
+	'(IF (IF (NOT p) (NOT q)) (IF p q))',       ### cnf1 Example from slide 59
+	#'(OR p (NOT p) q (NOT q))',                 ### cnf2 3rd from P1_grader
+	#'(AND p (NOT p) (NOT (NOT querty123)))',    ### cnf3 4th from P1_grader
+	'(IF (IF p (IF q r)) (IF q (IF p r)))',     ### cnf4 4th Example from slide 71
+	'(IF (NOT (OR p q123)) (AND q123 (NOT p)))', ### cnf5 Complex example
+	'(NOT (OR (AND (NOT p) q t) (IF (NOT q) (NOT t))))' ### cnf6 complex example
 	]
 	
-	cnf1 = [[['p'], ['p'], 'q'], ['q', ['p'], 'q']]	# (-p v -p v q) ^ (q v -p v q)
-	cnf2 = [['p', ['p'], 'q', ['q']]]				# (p v -p v q v -q)
-	cnf3 = [['p'], [['p']], ['querty123']]			# (p) ^ (-p) ^ (querty123)
-	cnf4 = [['p', 'q', 'q'], ['p', 'q', ['p']]]		# (p v q v q) ^ (p v q v -p)
+	cnf1 = [[['p'], ['p'], 'q'], ['q', ['p'], 'q']] # (-p v -p v q) ^ (q v -p v q)
+	#cnf2 = [['p', ['p'], 'q', ['q']]]               # (p v -p v q v -q)
+	#cnf3 = [['p'], [['p']], ['querty123']]          # (p) ^ (-p) ^ (querty123)
+	cnf4 = [['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']] # (p v -q v -p v r) ^ (q v -q v -p v r) ^ (-r v -q v -p v r)
+	cnf5 = [['p', 'q123', 'q123'], ['p', 'q123', ['p']]]  # (p v q v q) ^ (p v q v -p)
+	cnf6 = [['p', ['q'], ['t']], [['q']], ['t']]    # (p v -q v -t) ^ (-q) ^ (-t)
 
 	## If you prefer a list of the cnfs use this
 	'''
 	cnfProblems = [[[['p'], ['p'], 'q'], ['q', ['p'], 'q']], 
 	[['p', ['p'], 'q', ['q']]], 
 	[['p'], [['p']], ['querty123']], 
-	[['p', 'q', 'q'], ['p', 'q', ['p']]]]
+	[['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']], 
+	[['p', 'q123', 'q123'], ['p', 'q123', ['p']]], 
+	[['p', ['q'], ['t']], [['q']], ['t']]]
 	'''
 
 	for i in range(len(problems)):
