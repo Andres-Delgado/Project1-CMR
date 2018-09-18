@@ -161,9 +161,9 @@ def checkSatisfyability(formula, variables):
 			return 'S'
 		elif [] in newFormula:
 			return 'U'
-		#else:
-			#print("do resolution")
-			#newFormula = doResolution(newFormula, x)
+		else:
+			print("do resolution")
+			newFormula = doResolution(newFormula, x)
 	return 'U'
 
 def doDistributive(formula):
