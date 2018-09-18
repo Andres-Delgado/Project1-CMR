@@ -43,12 +43,12 @@ def proveFormula(F):
 	cnfList = Distribute(cnfList)
 
 	cnfList = ClasualForm(cnfList)
+	print(cnfList)
 
 	return checkSatisfyability(cnfList, variableList)
 
 
 def checkSatisfyability(formula, variables):
-
 	# Will stop branch if it was called during last variable
 	if not variables:
 		return 'U'
@@ -116,9 +116,9 @@ def checkSatisfyability(formula, variables):
 				if x in y or [x] in y:
 					newFormula.remove(y)
 		# pureVar will still be True when current variable has been deleted from all clauses
-		elif varPure == 0 and pureVar:
-			pureVar = False
-		elif pureVar:
+		# elif varPure == 0 and pureVar:
+		# 	pureVar = False
+		elif pureVar and varPure != 0:
 			branch = False
 			for y in formula:
 				if varPure == 1:
@@ -134,9 +134,11 @@ def checkSatisfyability(formula, variables):
 		# Assign boolean value to x so that it satisfies its current clause (Unit-Prop)
 		# Branch formula with assumed variable. Returns 'S' if branch is satisfied, continue to resolution otherwise.
 		if branch:
-			branchFormula = formula[:]
-			xIndex = [1 if x in y else -1 if [x] in y else 0 for y in formula]
+			branchFormula = formula[:] # a compy of the formula
+			xIndex = [1 if x in y else -1 if [x] in y else 0 for y in formula] # look for all occurences x and ~x in each clause
 			# Found positive form of x in the formula
+			# after making a guess it will do unit propogation with the variable in that form
+			# after removing the appropriate statements, we call checkSatisfyability on branched output
 			if 1 in xIndex:
 				for y in formula:
 					if x in y:
@@ -159,12 +161,12 @@ def checkSatisfyability(formula, variables):
 			return 'S'
 		elif [] in newFormula:
 			return 'U'
-		#else:
-			#print("Do Resolution")
+		else:
+			#print("do resolution")
+			newFormula = doResolution(newFormula, x)
 	return 'U'
 
 def doDistributive(formula):
-
 	#check if the formula is in cnf form
 	cnf = True
 	for x in formula:
@@ -227,6 +229,33 @@ def doDistributive(formula):
 
 
 	return cnfForm
+
+def doResolution(currentFormula, currentVar):
+	# Here I check if any resolvents can be made.
+	# I check if there is [[p, a, b], [[p], c, d]] and it turns into [[a, b, c, d]] and I can eliminate clauses containing p or ~p
+	# I also make sure that things like [[a, a], [[a], [a]]] can't be used for resolvents
+	resolvent = False
+
+	for y in currentFormula:
+		if currentVar in y:
+			for z in formula:
+				if z != y and [currentVar] in z and list(filter(lambda a: a != currentVar, y)) != [] and list(filter(lambda a: a != [currentVar], z)) != []:
+					temp1 = list(filter(lambda a: a != currentVar, y))
+					temp2 = list(filter(lambda a: a != [currentVar], z))
+					temp1.extend(temp2)
+					currentFormula.append(temp1)
+					resolvent = True
+
+	if resolvent:
+		for y in formula:
+			if currentVar in y:
+				currentFormula.remove(y)
+			if [currentVar] in y:
+				currentFormula.remove(y)
+
+	return currentFormula
+
+
 
 def ClasualForm(formula):
 
@@ -485,44 +514,44 @@ def FindVariables(formula, variables = None):
 		variables.append(formula[0])
 	return variables
 
-def resolution(clausalFormFormula, vars):
-	"""
-	performs the resolution rule on a bool formula in clausal form:
-
-	Given some CNF formula F
-	For some variable p:
-		For every clause C1 containing p:
-			For every clause C2 containing ¬p:
-				Create the resolvent CR from C1 and C2, add it to assignments
-				NOTE: even if CR is empty, it must be kept!
-	Remove all clauses containing p or ¬p from F
-
-	clausalForm = a list of clauses representing a cnf formula
-	[ [p, q], [[p]], [p, [q], r, s, t, u, v] ]
-	if only considering the 'q's,the function will return this:
-	[ [[p]], [p, p, r, s, t, u, v] ]
-	the second term is the resolvent of the 1st and 3rd terms of the previous
-
-	vars = a list containing all the variables found in the statement
-	[p, q, r, s, t, u, v]
-
-
-	a list within an inner list if considered a negative variable
-	"""
-
-	 # Will store all of the statements after resolution operation has finished
-	expressionWithResolution = [];
-
-	for var in vars: # apply resolution to each variable
-		clausesWithVar = findClausesWithVariable(clausalFormFormula, var) # a list containing the clauses that use the var
-		clausesWithNegVar = findClausesWithVariable(clausalFormFormula, [var])
-
-		#print('\nvar:', var, '\nclauses:\n', clausesWithVariable)
-		print('\nvar:', var, '\nclauses:\n', clausesWithVar)
-		print('\nvar:', var, '\nneg clauses:\n', clausesWithNegVar)
-
-
-	return expressionWithResolution;
+# def resolution(clausalFormFormula, vars):
+# 	"""
+# 	performs the resolution rule on a bool formula in clausal form:
+#
+# 	Given some CNF formula F
+# 	For some variable p:
+# 		For every clause C1 containing p:
+# 			For every clause C2 containing ¬p:
+# 				Create the resolvent CR from C1 and C2, add it to assignments
+# 				nOTE: even if CR is empty, it must be kept!
+# 	Remove all clauses containing p or ¬p from F
+#
+# 	clausalForm = a list of clauses representing a cnf formula
+# 	[ [p, q], [[p]], [p, [q], r, s, t, u, v] ]
+# 	if only considering the 'q's,the function will return this:
+# 	[ [[p]], [p, p, r, s, t, u, v] ]
+# 	the second term is the resolvent of the 1st and 3rd terms of the previous
+#
+# 	vars = a list containing all the variables found in the statement
+# 	[p, q, r, s, t, u, v]
+#
+#
+# 	a list within an inner list if considered a negative variable
+# 	"""
+#
+# 	 # Will store all of the statements after resolution operation has finished
+# 	expressionWithResolution = [];
+#
+# 	for var in vars: # apply resolution to each variable
+# 		clausesWithVar = findClausesWithVariable(clausalFormFormula, var) # a list containing the clauses that use the var
+# 		clausesWithNegVar = findClausesWithVariable(clausalFormFormula, [var])
+#
+# 		#print('\nvar:', var, '\nclauses:\n', clausesWithVariable)
+# 		print('\nvar:', var, '\nclauses:\n', clausesWithVar)
+# 		print('\nvar:', var, '\nneg clauses:\n', clausesWithNegVar)
+#
+#
+# 	return expressionWithResolution;
 
 def findClausesWithVariable(clausalFormFormula, variable):
 	"""
@@ -544,21 +573,26 @@ def findClausesWithVariable(clausalFormFormula, variable):
 if __name__ == "__main__":
 
 	problems = [#'p', '(NOT p)',
-	#'(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
-	#'(IF p p)',
-	#'(AND p (NOT p) q (NOT t) gf)',         # cnf0
-	#'(OR five (OR three four))',
-	#'(IF (AND q123 (NOT p) t) p)', 			#Test DM
-	#'anAtom123',
-	#'(NOT (NOT (NOT (IF p q))))',			#Test DM
-	#'(NOT (AND p q))',            			#Test DM
-	#'(NOT (NOT (AND p q)))'       			#Test DM
-	#'(IF (IF (NOT p) (NOT q)) (IF p q))',       ### cnf1 Example from slide 59
-	#'(OR p (NOT p) q (NOT q))',                 ### cnf2 3rd from P1_grader
-	#'(AND p (NOT p) (NOT (NOT querty123)))',    ### cnf3 4th from P1_grader
-	#'(IF (IF p (IF q r)) (IF q (IF p r)))',     ### cnf4 4th Example from slide 71
-	#'(IF (NOT (OR p q123)) (AND q123 (NOT p)))', ### cnf5 Complex example
-	#'(NOT (OR (AND (NOT p) q t) (IF (NOT q) (NOT t))))' ### cnf6 complex example
+	'(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
+	'(IF p p)',
+	'(AND p (NOT p) q (NOT t) gf)',         # cnf0
+	'(OR five (OR three four))',
+	'(IF (AND q123 (NOT p) t) p)', 			#Test DM
+	'anAtom123',
+	'(NOT (NOT (NOT (IF p q))))',			#Test DM
+	'(NOT (AND p q))',            			#Test DM
+	'(NOT (NOT (AND p q)))'       			#Test DM
+	'(IF (IF (NOT p) (NOT q)) (IF p q))',       ### cnf1 Example from slide 59
+	'(OR p (NOT p) q (NOT q))',                 ### cnf2 3rd from P1_grader
+	'(AND p (NOT p) (NOT (NOT querty123)))',    ### cnf3 4th from P1_grader
+	'(IF (IF p (IF q r)) (IF q (IF p r)))',     ### cnf4 4th Example from slide 71
+	'(IF (NOT (OR p q123)) (AND q123 (NOT p)))', ### cnf5 Complex example
+	'(NOT (OR (AND (NOT p) q t) (IF (NOT q) (NOT t))))', ### cnf6 complex example
+	'(AND (AND (OR p q) (OR (NOT p) u r s t u v)))',
+	'(AND (AND (OR p q) (OR (NOT p) u r s t u v)))',
+	'(AND (OR p q r s) (OR a b c d (NOT p)))',
+	'(AND (OR p q r) (OR (NOT s) (NOT t) (NOT u)))',
+	'(AND (IF p q) p (NOT q))'
 	]
 
 	cnf0 = [['p'], [['p']], ['q'], [['t']], ['gf']]
@@ -590,6 +624,6 @@ if __name__ == "__main__":
 	['a', 'b', 'c', 'd']
 	]
 
-	for i in range(len(cnfProblems)):
-	#	#print(proveFormula(problems[i]), end = '\n\n')
-		print(checkSatisfyability(cnfProblems[i], variables[i]))
+	for i in range(len(problems)):
+		print(proveFormula(problems[i]), end = '\n\n')
+		#print(checkSatisfyability(cnfProblems[i], variables[i]))
