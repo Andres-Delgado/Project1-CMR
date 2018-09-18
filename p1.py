@@ -13,7 +13,7 @@ def proveFormula(F):
 	# note: All these if statements are just used for testing #
 	###########################################################
 
-	print("Given:     ", F)
+	#print("Given:     ", F)
 
 	#Stores a binary tree list of the given input F
 	formulaList = MakeList(F)
@@ -43,7 +43,7 @@ def proveFormula(F):
 	cnfList = Distribute(cnfList)
 
 	cnfList = ClasualForm(cnfList)
-	print(cnfList)
+	#print(cnfList)
 
 	return checkSatisfyability(cnfList, variableList)
 
@@ -161,9 +161,9 @@ def checkSatisfyability(formula, variables):
 			return 'S'
 		elif [] in newFormula:
 			return 'U'
-		else:
+		#else:
 			#print("do resolution")
-			newFormula = doResolution(newFormula, x)
+			#newFormula = doResolution(newFormula, x)
 	return 'U'
 
 def doDistributive(formula):
@@ -570,60 +570,60 @@ def findClausesWithVariable(clausalFormFormula, variable):
 
 	return clausesWithVar
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-	problems = [#'p', '(NOT p)',
-	'(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
-	'(IF p p)',
-	'(AND p (NOT p) q (NOT t) gf)',         # cnf0
-	'(OR five (OR three four))',
-	'(IF (AND q123 (NOT p) t) p)', 			#Test DM
-	'anAtom123',
-	'(NOT (NOT (NOT (IF p q))))',			#Test DM
-	'(NOT (AND p q))',            			#Test DM
-	'(NOT (NOT (AND p q)))'       			#Test DM
-	'(IF (IF (NOT p) (NOT q)) (IF p q))',       ### cnf1 Example from slide 59
-	'(OR p (NOT p) q (NOT q))',                 ### cnf2 3rd from P1_grader
-	'(AND p (NOT p) (NOT (NOT querty123)))',    ### cnf3 4th from P1_grader
-	'(IF (IF p (IF q r)) (IF q (IF p r)))',     ### cnf4 4th Example from slide 71
-	'(IF (NOT (OR p q123)) (AND q123 (NOT p)))', ### cnf5 Complex example
-	'(NOT (OR (AND (NOT p) q t) (IF (NOT q) (NOT t))))', ### cnf6 complex example
-	'(AND (AND (OR p q) (OR (NOT p) u r s t u v)))',
-	'(AND (AND (OR p q) (OR (NOT p) u r s t u v)))',
-	'(AND (OR p q r s) (OR a b c d (NOT p)))',
-	'(AND (OR p q r) (OR (NOT s) (NOT t) (NOT u)))',
-	'(AND (IF p q) p (NOT q))'
-	]
+	# problems = [#'p', '(NOT p)',
+	# '(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
+	# '(IF p p)',
+	# '(AND p (NOT p) q (NOT t) gf)',         # cnf0
+	# '(OR five (OR three four))',
+	# '(IF (AND q123 (NOT p) t) p)', 			#Test DM
+	# 'anAtom123',
+	# '(NOT (NOT (NOT (IF p q))))',			#Test DM
+	# '(NOT (AND p q))',            			#Test DM
+	# '(NOT (NOT (AND p q)))'       			#Test DM
+	# '(IF (IF (NOT p) (NOT q)) (IF p q))',       ### cnf1 Example from slide 59
+	# '(OR p (NOT p) q (NOT q))',                 ### cnf2 3rd from P1_grader
+	# '(AND p (NOT p) (NOT (NOT querty123)))',    ### cnf3 4th from P1_grader
+	# '(IF (IF p (IF q r)) (IF q (IF p r)))',     ### cnf4 4th Example from slide 71
+	# '(IF (NOT (OR p q123)) (AND q123 (NOT p)))', ### cnf5 Complex example
+	# '(NOT (OR (AND (NOT p) q t) (IF (NOT q) (NOT t))))', ### cnf6 complex example
+	# '(AND (AND (OR p q) (OR (NOT p) u r s t u v)))',
+	# '(AND (AND (OR p q) (OR (NOT p) u r s t u v)))',
+	# '(AND (OR p q r s) (OR a b c d (NOT p)))',
+	# '(AND (OR p q r) (OR (NOT s) (NOT t) (NOT u)))',
+	# '(AND (IF p q) p (NOT q))'
+	# ]
+	#
+	# cnf0 = [['p'], [['p']], ['q'], [['t']], ['gf']]
+	# cnf1 = [[['p'], ['p'], 'q'], ['q', ['p'], 'q']] # (-p v -p v q) ^ (q v -p v q)
+	# cnf2 = [['p', ['p'], 'q', ['q']]]               # (p v -p v q v -q)
+	# cnf3 = [['p'], [['p']], ['querty123']]          # (p) ^ (-p) ^ (querty123)
+	# cnf4 = [['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']] # (p v -q v -p v r) ^ (q v -q v -p v r) ^ (-r v -q v -p v r)
+	# cnf5 = [['p', 'q123', 'q123'], ['p', 'q123', ['p']]]  # (p v q v q) ^ (p v q v -p)
+	# cnf6 = [['p', ['q'], ['t']], [['q']], ['t']]    # (p v -q v -t) ^ (-q) ^ (-t)
+	#
+	# ## If you prefer a list of the cnfs use this
+	#
+	# cnfProblems = [[['p'], [['p']], ['q'], [['t']], ['gf']],
+	# #[[['p'], ['p'], 'q'], ['q', ['p'], 'q']],
+	# #[['p', ['p'], 'q', ['q']]],
+	# #[['p'], [['p']], ['querty123']],
+	# #[['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']],
+	# #[['p', 'q123', 'q123'], ['p', 'q123', ['p']]],
+	# #[['p', ['q'], ['t']], [['q']], ['t']]
+	# [['p', 'q'], ['p', ['r'], ['t']], ['p', 't', 's'], ['a', 'b'], [['c'], ['r'], 'd'], [['c'], 't', ['d']], ['c', 't', ['m']], ['c', ['m'], ['s']]],
+	# [[['a'], 'b', 'c'], ['a', 'b', 'd'], ['a', 'c', ['d']], ['a', ['c'], 'd'], ['a', ['c'], ['d']], [['b'], ['c'], 'd'], [['a'], 'b', ['c']], [['a'], ['b'], 'c']]
+	# ]
+	#
+	# variables = [['p', 'q', 't', 'gf'],
+	# #['p', 'q'],
+	# #['p', 'q'],
+	# #['p', 'q', 'r'],
+	# ['p', 'q', 'r', 't', 's', 'a', 'b', 'c', 'd', 'm'],
+	# ['a', 'b', 'c', 'd']
+	# ]
 
-	cnf0 = [['p'], [['p']], ['q'], [['t']], ['gf']]
-	cnf1 = [[['p'], ['p'], 'q'], ['q', ['p'], 'q']] # (-p v -p v q) ^ (q v -p v q)
-	cnf2 = [['p', ['p'], 'q', ['q']]]               # (p v -p v q v -q)
-	cnf3 = [['p'], [['p']], ['querty123']]          # (p) ^ (-p) ^ (querty123)
-	cnf4 = [['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']] # (p v -q v -p v r) ^ (q v -q v -p v r) ^ (-r v -q v -p v r)
-	cnf5 = [['p', 'q123', 'q123'], ['p', 'q123', ['p']]]  # (p v q v q) ^ (p v q v -p)
-	cnf6 = [['p', ['q'], ['t']], [['q']], ['t']]    # (p v -q v -t) ^ (-q) ^ (-t)
-
-	## If you prefer a list of the cnfs use this
-
-	cnfProblems = [[['p'], [['p']], ['q'], [['t']], ['gf']],
-	#[[['p'], ['p'], 'q'], ['q', ['p'], 'q']],
-	#[['p', ['p'], 'q', ['q']]],
-	#[['p'], [['p']], ['querty123']],
-	#[['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']],
-	#[['p', 'q123', 'q123'], ['p', 'q123', ['p']]],
-	#[['p', ['q'], ['t']], [['q']], ['t']]
-	[['p', 'q'], ['p', ['r'], ['t']], ['p', 't', 's'], ['a', 'b'], [['c'], ['r'], 'd'], [['c'], 't', ['d']], ['c', 't', ['m']], ['c', ['m'], ['s']]],
-	[[['a'], 'b', 'c'], ['a', 'b', 'd'], ['a', 'c', ['d']], ['a', ['c'], 'd'], ['a', ['c'], ['d']], [['b'], ['c'], 'd'], [['a'], 'b', ['c']], [['a'], ['b'], 'c']]
-	]
-
-	variables = [['p', 'q', 't', 'gf'],
-	#['p', 'q'],
-	#['p', 'q'],
-	#['p', 'q', 'r'],
-	['p', 'q', 'r', 't', 's', 'a', 'b', 'c', 'd', 'm'],
-	['a', 'b', 'c', 'd']
-	]
-
-	for i in range(len(problems)):
-		print(proveFormula(problems[i]), end = '\n\n')
-		#print(checkSatisfyability(cnfProblems[i], variables[i]))
+	# for i in range(len(problems)):
+	# 	print(proveFormula(problems[i]), end = '\n\n')
+	# 	#print(checkSatisfyability(cnfProblems[i], variables[i]))

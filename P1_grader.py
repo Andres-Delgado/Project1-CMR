@@ -14,12 +14,12 @@ studentName = "TestStudent"
 problems = ['p',
 	'(NOT (NOT (NOT (NOT not))  )		)',
 	'(OR p (NOT p) q (NOT q))',
-	'(AND p (NOT p) (NOT (NOT querty123)))'] 
+	'(AND p (NOT p) (NOT (NOT querty123)))']
 answers = ['S',
 	'S',
 	'S',
 	'U']
-	
+
 maxProblemTimeout = 60
 
 
@@ -40,10 +40,11 @@ except Exception as e:
 
 
 currentScore = 100
-for i in range(len(problems)):
+for i in range(0, len(problems)):
+	print("i", i)
 	P = problems[i]
 	A = answers[i]
-	
+
 	prnt('='*30)
 	prnt("TESTING ON INPUT PROBLEM:")
 	prnt(P)
@@ -54,7 +55,7 @@ for i in range(len(problems)):
 		startTime = time.time()
 		result = proveFormula(P)
 		prnt(result)
-		endTime = time.time()		
+		endTime = time.time()
 		if endTime-startTime > maxProblemTimeout:
 			prnt("Time to execute was " + str(int(endTime-startTime)) + " seconds; a maximum of " + str(maxProblemTimeout) + " is allowed (-10 points)")
 		elif result==A:
@@ -66,7 +67,7 @@ for i in range(len(problems)):
 	except Exception as e:
 		prnt("Error while executing this problem: " + str(traceback.format_exc()))
 		currentScore -= 10
-	
+
 prnt('='*30)
 prnt('='*30)
 prnt('='*30)
