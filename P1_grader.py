@@ -41,7 +41,7 @@ except Exception as e:
 
 currentScore = 100
 for i in range(0, len(problems)):
-	print("i", i)
+	#print("i", i)
 	P = problems[i]
 	A = answers[i]
 

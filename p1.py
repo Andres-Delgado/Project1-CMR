@@ -162,7 +162,7 @@ def checkSatisfyability(formula, variables):
 		elif [] in newFormula:
 			return 'U'
 		else:
-			print("do resolution")
+			#print("do resolution")
 			newFormula = doResolution(newFormula, x)
 	return 'U'
 
