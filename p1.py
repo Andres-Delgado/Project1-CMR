@@ -17,7 +17,7 @@ def proveFormula(F):
 	- Find all variables.
 	- Run the Algorithm"""
 
-	#Stores a binary tree list of the given input F
+	# Stores a binary tree list of the given input F
 	formulaList = MakeList(F)
 	if formulaList:
 		if type(formulaList) is str:
