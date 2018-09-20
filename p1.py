@@ -9,6 +9,13 @@ Project 1: DP-based SAT solver
 """
 
 def proveFormula(F):
+	"""Andres Delgado, Abdullah Alsayyar, Jibreel Campbell
+	This function prepares the input F for the algorithm by performing the following steps:
+	- Convert the formula into a S-Expression list
+	- Convert the formula to CNF Form in S-Expression by applying Theorem 4.3.
+	- Convert the formula to a clausal form.
+	- Find all variables.
+	- Run the Algorithm"""
 
 	#Stores a binary tree list of the given input F
 	formulaList = MakeList(F)
@@ -16,9 +23,6 @@ def proveFormula(F):
 		if type(formulaList) is str:
 			return 'S'
 	else: return
-
-	# Extracts all variables from formula into variableList
-	variableList = FindVariables(formulaList)
 
 	# Converting to CNF: Theroem 4.3, Step 1
 	cnfList = EliminateOps(formulaList)
@@ -39,30 +43,55 @@ def proveFormula(F):
 	# Converts the CNF S-Expression to clausal form
 	cnfList = ClasualForm(cnfList)
 
+	# Extracts all variables from formula into variableList
+	variableList = FindVariables(cnfList)
+
 	# Run Algorithm
 	return checkSatisfyability(cnfList, variableList)	
-
 
 def checkSatisfyability(formula, variables):
 	"""This is the main function of the algorithm. It iterates through each variable and performs the following steps:
 	Step 1. Checks if Unit-Prop or Pure-Literal rules can be applied. Also checks for (p) ^ (-p) and (p v (-p) v ...) cases.
 		- if (p) ^ (-p) case is found, formula is 'U'
 		- if (p v (-p) v ...) case is found, perform a "Real" branch and return the ORed result.
-	Steps 2/3. Performs Unit Propagation and the Pure Literal Rule respectively. 
-	Step 4. If Pure Literal was not applied, Make a "Leaf" of the formula and try to satisfy that leaf. If it results in 'S' then formula is 'S'
+	Steps 2/3. Performs the Unit Propagation and the Pure Literal Rule respectively. If any are applied, restart algorithm on next variable 
+	Step 4. Make a "Leaf" of the formula and try to satisfy that leaf. If it results in 'S' then formula is 'S'
 	Step 5. Perform Resolution."""
-
+	
 	# Will stop branch if it was called during last variable
 	if not variables:
 		return 'U'
 
-	# Start the algorithm, going through the variables and applying the individual rules.
+	# Start the algorithm, going through the variables and applying the individual rules
 	for x in variables:
-		pureVar = True
-		varPure = 0
-		unitPropForm = 0
-		branch = True
+
+		# Any CNF formula with 1 clause is always satisfiable, unless it's an empty clause
+		if len(formula) == 1:
+			if formula[0] == []:
+				return'U'
+			else: return 'S'
+
+		# Checks if the current variable is in the formula, if not restart algorithm at the next variable
+		# posForm will be passed into the Leaf call 
+		xInFormula, posForm = False, False
+		for arg in formula:
+			if x in arg:
+				posForm = True
+				xInFormula = True
+				break
+			elif [x] in arg:
+				xInFormula = True
+				break
+		if not xInFormula:
+			continue
+
+		# pureVar will determine if we can apply the Pure Literal Rule
+		# varPure == 1 if Pure Literal is positive, -1 if Pure Literal is negative
+		# unitPropForm == 1 if variable is positive, -1 if it's negative, 0 if we cannot perform Unit Propagation
+		pureVar = True 
+		varPure, unitPropForm = 0, 0
 		   
+		##### Step 1: Checking for rules and special cases ####
 		for y in formula:
 			# Checking if Unit Propagation is applicable and if (p) ^ (-p) exists
 			if y == [x]:
@@ -77,7 +106,6 @@ def checkSatisfyability(formula, variables):
 			# Case: (p v -p v ...) -> Perform a real branch, run the algorithm on both branches
 			# branch1 and branch2 are new versions of the formula where p = True and P = False respectively
 			if x in y and [x] in y: 
-				#print("Branching")
 				branch1 = Branch(formula, variables[variables.index(x):], True)
 				if branch1 == 'S':
 					return 'S'
@@ -95,26 +123,20 @@ def checkSatisfyability(formula, variables):
 				pureVar = False
 			elif varPure == 1 and [x] in y:
 				pureVar = False
-
+		
+		# newFormula will be used to modify the formula when performing any rule
 		newFormula = formula[:]
 
-		####### TESTING RESOLUTION 
-		print("Resolution for: ", newFormula)
-		print("Variable: ", x)
-		resoFormula = doResolution(newFormula, x)
-		for reso in resoFormula:
-			print(reso)
-		print("End Resolution.", end = '\n\n')
-
-		newFormula = formula[:]
-		# Unit Propagation on positive literal
+		##### Step 2: Unit Propagation #####
+		# Positive literal
 		if unitPropForm == 1:
 			for y in formula:
 				if x in y: 
 					newFormula.remove(y)
 				elif [x] in y: 
-					newFormula[newFormula.index(y)].remove([x])
-		# Unit Propagation on negative literal
+					newFormula[newFormula.index(y)].remove([x])	
+	
+		# Negative literal
 		elif unitPropForm == -1:
 			for y in formula:
 				if [x] in y:
@@ -122,13 +144,19 @@ def checkSatisfyability(formula, variables):
 				elif x in y:
 					newFormula[newFormula.index(y)].remove(x)
 		
-		if newFormula == []:
-			return 'S'
-		formula = newFormula[:]
-				
-		# Pure Literal Rule
+		# Unit Propagation was performed: check satisfiability, continue to next variable if no conclusion.
+		if unitPropForm != 0:
+			if newFormula == []:
+				return 'S'
+			elif [] in newFormula:
+				return 'U'
+			else:
+				formula = newFormula[:]
+				continue
+					
+		##### Step 3: Pure Literal #####
+		# If performed, check satisfiablity, continue to next variable if no conclusion.
 		if pureVar and varPure != 0:
-			branch = False
 			for y in formula:
 				if varPure == 1:
 					if x in y:
@@ -136,103 +164,98 @@ def checkSatisfyability(formula, variables):
 				elif varPure == -1:
 					if [x] in y:
 						newFormula.remove(y)
-				
-		if newFormula == []:
-			return 'S'
-		formula = newFormula[:]
-		
-		# If we didn't Perform rule 2 and if current variable x is in formula
-		# Assign boolean value to x so that it satisfies its current clause (Unit-Prop)
-		# Branch formula with assumed variable. Returns 'S' if branch is satisfied, continue to resolution otherwise.
-		if branch:
-			#print("In Branch")
-			leaf = Branch(formula, variables[variables.index(x):])
-			#print("Out of Branch")
-			if leaf == 'S':
+			if newFormula == []:
 				return 'S'
-
-		if formula == []:
+			elif [] in newFormula:
+				return 'U'
+			else:
+				formula = newFormula[:]
+				continue
+		
+		##### Step 4: Leaf #####
+		# Assign boolean value to x so that it satisfies its current clause.
+		# Branch formula with assumed variable. Returns 'S' if branch is satisfied, continue to resolution otherwise.
+		leaf = Branch(formula, variables[variables.index(x):], posForm)
+		if leaf == 'S':
 			return 'S'
-		elif [] in formula:
+
+		##### Step 5: Resolution #####
+		resoFormula = Resolution(formula, x)
+
+		if resoFormula == []:
+			return 'S'
+		elif [] in resoFormula:
 			return 'U'
-
-		#print("Resolution for: ", newFormula)
-		#print("Variable: ", x)
-		#resoFormula = doResolution(newFormula, x)
-		#for reso in resoFormula:
-		#	print(reso)
-
-		#formula = newFormula[:]
-		#if formula == []:
-		#	return 'S'
-		#elif [] in formula:
-		#	return 'U'
+		else: formula = resoFormula[:]
 	return 'U'
 
-def doResolution(currentFormula, currentVar):
-	# Here I check if any resolvents can be made.
-	# I check if there is [[p, a, b], [[p], c, d]] and it turns into [[a, b, c, d]] and I can eliminate clauses containing p or ~p
-	# I also make sure that things like [[a, a], [[a], [a]]] can't be used for resolvent
+def Resolution(formula, variable):
+	"""This function performs the resolution rule to the formula for the given variable."""
+
+	# resultFormula will be used to modify formula
+	resultFormula = formula[:]
+	posClause, negClause = [], []
+	posExists, negExists = False, False
+
+	# Iterates through the formula to find all clauses containing p or -p
+	# Stores each clause with p in posClause and each clause with -p in negClause
+	# Also deletes the variable p after storing the clause
+	for arg in formula:
+		if variable in arg:
+			posExists = True
+			posClause.append(arg[:])
+			posClause[posClause.index(arg)].remove(variable)
+			resultFormula.remove(arg)
+		elif [variable] in arg:
+			negExists = True
+			negClause.append(arg[:])
+			negClause[negClause.index(arg)].remove([variable])
+			resultFormula.remove(arg)
 	
-	resolvent = False
-	for y in currentFormula:
-		if currentVar in y:
-			for z in currentFormula:
-				if z != y and [currentVar] in z and list(filter(lambda a: a != currentVar, y)) != [] and list(filter(lambda a: a != [currentVar], z)) != []:
-					temp1 = list(filter(lambda a: a != currentVar, y))
-					temp2 = list(filter(lambda a: a != [currentVar], z))
-					temp1.extend(temp2)
-					currentFormula.append(temp1)
-					resolvent = True
+	# If there was no instance of p in one clause and -p in another (posExists and negExists are both False)
+	# Then Resolution doesnt apply
+	if posExists and negExists:
+		reso = []
+	else: return formula
 
-	if resolvent:
-		for y in currentFormula:
-			if currentVar in y:
-				currentFormula.remove(y)
-			if [currentVar] in y:
-				currentFormula.remove(y)
+	# Performs resolution on all the clauses
+	reso = [x+y for x in posClause for y in negClause]
 
-	return currentFormula
+	# Removes all duplicates variables in the clauses
+	for arg in reso:
+		stack = []
+		for y in arg:
+			if y not in stack:
+				stack.append(y)
+		resultFormula.append(stack)
+	return resultFormula
 
-def Branch(formula, variables, realBranch = None):
+def Branch(formula, variables, varForm):
 	"""Branch/Leaf function: For the current variable p,
-	Scans the clauses and finds a clause with variable p. 
-	Assigns p a value so that it'll satisfy the clause and perform the algorithm with that assumption.
-	If the original call of branch was a "Real" branch (case (p v (-p) v ...)) realBranch == True/False
-		then this program will return the ORed result of the 2 branches.
-	Else if this call was a "Leaf": realbranch == None
+	Assigns p = varForm so that it'll satisfy a clause and runs the algorithm with that assumption.
+	If the original call of branch was a "Real" branch (case (p v (-p) v ...))
+		then this program will return the ORed result of this Branch call and the other Branch call
+	Else if this call was a "Leaf":
 		then the program will only return when 'S', and will continue with the algorithm if it finds a 'U' conclusion."""
 
 	branchFormula = formula[:]
 	x = variables[0]
 	
-	# Each element in xIndex represents the clauses in the formula. Element == 1 means there is a positive form of p in the clause
-	# element == -1 means negative, and element == 0 means there was not a p in the clause
-
-	# Leaf
-	if realBranch == None:
-		xIndex = [1 if x in y else -1 if [x] in y else 0 for y in formula]
-	# Real Branch with p = True
-	elif realBranch:
-		xIndex = [1]
-	# Real Branch with p = False
-	else:
-		xIndex = [-1]
-
-	# Found positive form of x in the formula
-	if 1 in xIndex:
+	# Variable is assigned True
+	if varForm:
 		for y in formula:
 			if x in y: 
 				branchFormula.remove(y)
 			elif [x] in y: 
 				branchFormula[branchFormula.index(y)].remove([x])
-	# Found negative form of x in the formula
-	elif -1 in xIndex:
+	# Variable is assigned False
+	elif not varForm:
 		for y in formula:
 			if [x] in y:
 				branchFormula.remove(y)
 			elif x in y:
 				branchFormula[branchFormula.index(y)].remove(x)
+	# A value was assigned, check satisfiability
 	if branchFormula != formula:
 		if branchFormula == []:
 			return 'S'
@@ -244,71 +267,6 @@ def Branch(formula, variables, realBranch = None):
 		if checkBranch == 'S':
 			return 'S'
 	return 'U'
-
-def doDistributive(formula):
-
-	#check if the formula is in cnf form
-	cnf = True
-	for x in formula:
-		if type(x) is list and x[0] == 'AND':
-			andIn = formula.index(x)
-			if formula[0] == 'OR':
-				cnf = False
-
-			break
-
-	# if it is not CNF you are going to have to use the distributive property to 
-	# convert the formula to cnv
-	# Here I make the and value the first value and then it distrubutes the and variables with the rest of the or's
-	if not cnf:
-		newFormula = []
-		alors = []
-
-		for i ,x in enumerate(formula):
-			if i != 0 and i != andIn and x[0] == 'OR':
-				alors.append(x[1:])
-
-		newFormula.append('AND')
-
-		for x in formula[andIn][1:]:
-			newFormula.append(['OR', x])
-			for y in alors:
-				newFormula[-1].extend(y)
-
-		formula = newFormula
-
-	# Here I transform the resultant formula into the clausal form that is require for dp
-	# so if there is just an or it will double bracket the whole expression.
-	# if it starts with an and it will remove the OR's and NOT's from the sub arrays by looping
-	# through the list.
-	cnfForm = []
-	if formula[0] == 'OR':
-		orForm = []
-		for x in formula[1:]:
-			if type(x) is list:
-				orForm.append(x[1:])
-			else:
-				orForm.append(x)
-		cnfForm.append(orForm)
-		return cnfForm
-
-	for x in formula[1:]:
-		if type(x) is list:
-			if x[0] == 'OR':
-				orForm = []
-				for y in x[1:]:
-					if type(y) is list:
-						orForm.append(y[1:])
-					else:
-						orForm.append(y)
-				cnfForm.append(orForm)  
-			else:
-				cnfForm.append([x[1:]])
-		else:
-			cnfForm.append([x])
-
-
-	return cnfForm
 
 def ClasualForm(formula):
 	"""This function takes the current CNF formula in S-Expression and converts it to a clausal form.
@@ -322,15 +280,18 @@ def ClasualForm(formula):
 	# Iterates through the clauses in the formula
 	for arg in range(len(formula)):
 		if type(formula[arg]) is list:
+
 			# There is a negated variable inside a single clause
 			if (formula[0] == "AND") and (formula[arg][0] == "NOT"):
 				formula[arg] = [formula[arg][1:]]
 			# else, search inside the clause
 			else: 
 				formula[arg] = ClasualForm(formula[arg])
+
 		# Makes the clause a list, needed when encountering single variables
 		elif (arg > 0) and (formula[0] == "AND"):
 			formula[arg] = [formula[arg]]
+
 		# Stack of all the clauses/variables
 		if (arg > 0) and (formula[arg] not in stack):
 			stack.append(formula[arg])
@@ -546,88 +507,17 @@ def MakeList(F):
 			return formula
 	return
 
-def FindVariables(formula, variables = None):
-	"""Recursively searches and returns a list of all unique variables in the formula."""
+def FindVariables(formula):
+	"""Returns a list of all the variables in the formula"""
 
-	normalOps = ['AND', 'OR', 'IF']
-	if variables is None:
-		variables = []
-
-	# The following ifs check index 0 of formula for operators or a variable
-	# Then recursively searches inside the arguments if it's a list
-	# Checks for 2-ary operators
-	if formula[0] in normalOps:
-		for i in range(1, len(formula)):
-			if type(formula[i]) is list:
-				variables = FindVariables(formula[i], variables)
-			elif formula[i] not in variables:
-				variables.append(formula[i])
-
-	# Checks for 1-ary operator (NOT)
-	elif formula[0] == "NOT":
-		if type(formula[1]) is list:
-			variables = FindVariables(formula[1], variables)
-		elif formula[1] not in variables:
-			variables.append(formula[1])
-
-	# formula is a single variable
-	elif formula[0] not in variables:
-		variables.append(formula[0])	
+	variables = []
+	for arg in formula:
+		for var in arg:
+			# Checks negative variable var
+			if type(var) is list:
+				if var[0] not in variables:
+					variables.append(var[0])
+			# Checks positive variable var
+			elif var not in variables:
+				variables.append(var)
 	return variables
-
-if __name__ == "__main__":
-	
-	problems = [#'p', '(NOT p)',
-	#'(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
-	#'(IF p p)',
-	#'(AND p (NOT p) q (NOT t) gf)',         # cnf0
-	#'(OR five (OR three four))',
-	#'(IF (AND q123 (NOT p) t) p)', 			#Test DM
-	#'anAtom123',
-	#'(NOT (NOT (NOT (IF p q))))',			#Test DM 
-	#'(NOT (AND p q))',            			#Test DM
-	#'(NOT (NOT (AND p q)))'       			#Test DM
-	#'(IF (IF (NOT p) (NOT q)) (IF p q))',       ### cnf1 Example from slide 59
-	#'(OR p (NOT p) q (NOT q))',                 ### cnf2 3rd from P1_grader
-	#'(AND p (NOT p) (NOT (NOT querty123)))',    ### cnf3 4th from P1_grader
-	#'(IF (IF p (IF q r)) (IF q (IF p r)))',     ### cnf4 4th Example from slide 71
-	#'(IF (NOT (OR p q123)) (AND q123 (NOT p)))', ### cnf5 Complex example
-	#'(NOT (OR (AND (NOT p) q t) (IF (NOT q) (NOT t))))' ### cnf6 complex example
-	]
-	
-	cnf0 = [['p'], [['p']], ['q'], [['t']], ['gf']]
-	cnf1 = [[['p'], ['p'], 'q'], ['q', ['p'], 'q']] # (-p v -p v q) ^ (q v -p v q)
-	cnf2 = [['p', ['p'], 'q', ['q']]]               # (p v -p v q v -q)
-	cnf3 = [['p'], [['p']], ['querty123']]          # (p) ^ (-p) ^ (querty123)
-	cnf4 = [['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']] # (p v -q v -p v r) ^ (q v -q v -p v r) ^ (-r v -q v -p v r)
-	cnf5 = [['p', 'q123', 'q123'], ['p', 'q123', ['p']]]  # (p v q v q) ^ (p v q v -p)
-	cnf6 = [['p', ['q'], ['t']], [['q']], ['t']]    # (p v -q v -t) ^ (-q) ^ (-t)
-
-	## If you prefer a list of the cnfs use this
-	
-	cnfProblems = [#[['p'], [['p']], ['q'], [['t']], ['gf']],
-	#[[['p'], ['p'], 'q'], ['q', ['p'], 'q']], 
-	#[['p', ['p'], 'q', ['q']]], 
-	#[['p'], [['p']], ['querty123']], 
-	#[['p', ['q'], ['p'], 'r'], ['q', ['q'], ['p'], 'r'], [['r'], ['q'], ['p'], 'r']], 
-	#[['p', 'q123', 'q123'], ['p', 'q123', ['p']]], 
-	#[['p', ['q'], ['t']], [['q']], ['t']]
-	#[['p', 'q'], ['p', ['r'], ['t']], ['p', 't', 's'], ['a', 'b'], [['c'], ['r'], 'd'], [['c'], 't', ['d']], ['c', 't', ['m']], ['c', ['m'], ['s']]],
-	#[[['a'], 'b', 'c'], ['a', 'b', 'd'], ['a', 'c', ['d']], ['a', ['c'], 'd'], ['a', ['c'], ['d']], [['b'], ['c'], 'd'], [['a'], 'b', ['c']], [['a'], ['b'], 'c']]
-	#[[['e'], 'f'], ['e', 'h', 'g'], [['e']], ['e', 'j'], ['h', ['j']]]
-	[['p', 'q', 't'], [['p'], 'r'], ['p', 's'], [['p']]]
-	]
-	
-	variables = [#['p', 'q', 't', 'gf'], 
-	#['p', 'q'],
-	#['p', 'q'], 
-	#['p', 'q', 'r'],
-	#['p', 'q', 'r', 't', 's', 'a', 'b', 'c', 'd', 'm'],
-	#['a', 'b', 'c', 'd']
-	#['e', 'f', 'h', 'g', 'j']
-	['p', 'q', 't', 'r', 's']
-	]
-	
-	for i in range(len(cnfProblems)):
-	#	#print(proveFormula(problems[i]), end = '\n\n')
-		print(checkSatisfyability(cnfProblems[i], variables[i]))
