@@ -1,0 +1,36 @@
+==============================
+TESTING ON INPUT PROBLEM:
+p
+CORRECT OUTPUT:
+S
+YOUR OUTPUT:
+S
+Correct!
+==============================
+TESTING ON INPUT PROBLEM:
+(NOT (NOT (NOT (NOT not))  )		)
+CORRECT OUTPUT:
+S
+YOUR OUTPUT:
+S
+Correct!
+==============================
+TESTING ON INPUT PROBLEM:
+(OR p (NOT p) q (NOT q))
+CORRECT OUTPUT:
+S
+YOUR OUTPUT:
+S
+Correct!
+==============================
+TESTING ON INPUT PROBLEM:
+(AND p (NOT p) (NOT (NOT querty123)))
+CORRECT OUTPUT:
+U
+YOUR OUTPUT:
+U
+Correct!
+==============================
+==============================
+==============================
+FINAL SCORE:100
