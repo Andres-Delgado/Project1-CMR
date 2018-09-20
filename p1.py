@@ -234,24 +234,37 @@ def doResolution(currentFormula, currentVar):
 	# Here I check if any resolvents can be made.
 	# I check if there is [[p, a, b], [[p], c, d]] and it turns into [[a, b, c, d]] and I can eliminate clauses containing p or ~p
 	# I also make sure that things like [[a, a], [[a], [a]]] can't be used for resolvents
-	resolvent = False
+	resolvent = True
+	resolvents = [] # holds the resolvents of each term. will be added at teh end after deleting the clauses containong p or ~p
+	print("curFormula", currentFormula)
 
 	for y in currentFormula:
+		print("y", y)
 		if currentVar in y:
-			for z in formula:
-				if z != y and [currentVar] in z and list(filter(lambda a: a != currentVar, y)) != [] and list(filter(lambda a: a != [currentVar], z)) != []:
+			for z in currentFormula:
+				print("z", z)
+				if z != y and [currentVar] in z:
 					temp1 = list(filter(lambda a: a != currentVar, y))
 					temp2 = list(filter(lambda a: a != [currentVar], z))
 					temp1.extend(temp2)
-					currentFormula.append(temp1)
+					print("temp1:", temp1)
+					resolvents.append(temp1)
 					resolvent = True
 
-	if resolvent:
-		for y in formula:
+	print("resolvents", resolvents)
+
+	currentFormulaCopy = currentFormula[:] # the copy is needed because we are modifying the list in the for loop below
+
+	if resolvents:
+		for y in currentFormulaCopy:
+			print("y", y)
 			if currentVar in y:
 				currentFormula.remove(y)
-			if [currentVar] in y:
+			elif [currentVar] in y:
 				currentFormula.remove(y)
+
+	print("curFormula", currentFormula)
+	currentFormula.extend(resolvents)
 
 	return currentFormula
 
@@ -570,8 +583,15 @@ def findClausesWithVariable(clausalFormFormula, variable):
 
 	return clausesWithVar
 
-# if __name__ == "__main__":
 
+
+if __name__ == "__main__":
+	#formula = [['p', 'z'], [['p'], 'x']]
+	formula = [['p','q', 't'], [['p'], 'r'], ['p', 's'], [['p']], ['a','p', 'q'], [['r'], 'h'], [['p'], 's'], ['p']]
+	#formula = [ [['p']], ['p'] ]
+
+	res = doResolution(formula, "p")
+	print(res)
 	# problems = [#'p', '(NOT p)',
 	# '(NOT (NOT (NOT (NOT not))  )		)',	### 2nd from grader
 	# '(IF p p)',
